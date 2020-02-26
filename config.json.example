@@ -1,0 +1,19 @@
+{
+    "server":{
+    "host":"localhost", 
+    "port":":8080"
+    },
+    "database":{
+    "host":"localhost",
+    "port":"5432",
+    "user":"username_your_database",
+    "pass":"password_your_database",
+    "db_name":"user_management"
+    },
+    "token": {
+    "key": "super_secret_key"
+    },
+    "file": {
+        "path":"user/asset/images"
+    }
+}
