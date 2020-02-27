@@ -100,24 +100,10 @@ func (call *UserHandler) createUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err = common.Encrypt(user)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		common.Response(w, common.Message(false, err.Error(), nil))
-		return
-	}
-
-	status := call.userUsecase.CheckMail(user)
-	if !status {
-		w.WriteHeader(http.StatusConflict)
-		common.Response(w, common.Message(false, "Opps.. sorry email already use other account", nil))
-		return
-	}
-
 	response, err := call.userUsecase.Create(user)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		common.Response(w, common.Message(false, "Oops.. something when wrong..", response))
+		common.Response(w, common.Message(false, err.Error(), response))
 		return
 	}
 
@@ -153,6 +139,20 @@ func (call *UserHandler) findByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	val, _ := auth.TokenValid(r)
+	users, err := call.userUsecase.FindByID(IDUser)
+	if val.Role != "admin" {
+		if err != nil || val.ID != users.ID {
+			w.WriteHeader(http.StatusForbidden)
+			common.Response(w, common.Message(false, "Access denied", nil))
+			return
+		}
+	} else if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		common.Response(w, common.Message(false, err.Error(), nil))
+		return
+	}
+
 	user, err = call.userUsecase.FindByID(IDUser)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -183,7 +183,6 @@ func (call *UserHandler) updateUser(w http.ResponseWriter, r *http.Request) {
 	val, _ := auth.TokenValid(r)
 	users, err := call.userUsecase.FindByID(IDUser)
 	if val.Role != "admin" {
-		fmt.Println(err, " <+> ", val.ID, "<+>", users.ID)
 		if err != nil || val.ID != users.ID {
 			w.WriteHeader(http.StatusForbidden)
 			common.Response(w, common.Message(false, "Access denied", nil))
@@ -195,6 +194,7 @@ func (call *UserHandler) updateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	user.ID = users.ID
 	err = common.Validate("update", user)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -202,14 +202,7 @@ func (call *UserHandler) updateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err = common.Encrypt(user)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		common.Response(w, common.Message(false, err.Error(), nil))
-		return
-	}
-
-	user, err = call.userUsecase.Update(IDUser, user)
+	user, err = call.userUsecase.Update(user)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		common.Response(w, common.Message(false, err.Error(), nil))
@@ -221,7 +214,7 @@ func (call *UserHandler) updateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (call *UserHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(mux.Vars(r)["id"])
+	IDUser, err := strconv.Atoi(mux.Vars(r)["id"])
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		common.Response(w, common.Message(false, "Invalid Request "+err.Error(), nil))
@@ -229,7 +222,7 @@ func (call *UserHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	val, _ := auth.TokenValid(r)
-	users, err := call.userUsecase.FindByID(id)
+	users, err := call.userUsecase.FindByID(IDUser)
 	if val.Role != "admin" {
 		if err != nil || val.ID != users.ID {
 			w.WriteHeader(http.StatusForbidden)
@@ -242,7 +235,7 @@ func (call *UserHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = call.userUsecase.Delete(id)
+	err = call.userUsecase.Delete(IDUser)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		common.Response(w, common.Message(false, "Oops.. something when wrong", nil))
@@ -263,8 +256,15 @@ func (call *UserHandler) handlingPhoto(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	val, _ := auth.TokenValid(r)
 	users, err := call.userUsecase.FindByID(IDUser)
-	if err != nil {
+	if val.Role != "admin" {
+		if err != nil || val.ID != users.ID {
+			w.WriteHeader(http.StatusForbidden)
+			common.Response(w, common.Message(false, "Access denied", nil))
+			return
+		}
+	} else if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		common.Response(w, common.Message(false, err.Error(), nil))
 		return
@@ -279,7 +279,7 @@ func (call *UserHandler) handlingPhoto(w http.ResponseWriter, r *http.Request) {
 
 	users.Photo = filePath
 	copier.Copy(&user, &users)
-	user, err = call.userUsecase.Update(IDUser, user)
+	err = call.userUsecase.UpdatePhoto(user)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		common.Response(w, common.Message(false, err.Error(), nil))
@@ -299,7 +299,7 @@ func (call *UserHandler) handleFile(r *http.Request, user *models.UserWrapper, k
 	defer file.Close()
 
 	image := viper.GetString("file.path") + "/" + user.Photo
-	if _, err := os.Stat(image); !os.IsNotExist(err) {
+	if _, err := os.Stat(image); !os.IsNotExist(err) && !strings.Contains(user.Photo, "default.jpeg") {
 		os.Remove(image)
 	}
 

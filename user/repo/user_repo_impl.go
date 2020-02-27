@@ -76,11 +76,11 @@ func (call *UserRepositoryImpl) FindAll() ([]*models.UserWrapper, error) {
 }
 
 // Update use for update user data
-func (call *UserRepositoryImpl) Update(id int, user *models.User) (*models.User, error) {
+func (call *UserRepositoryImpl) Update(user *models.User) (*models.User, error) {
 
 	users := new(models.User)
 
-	err := call.database.Table("user").Where("id = ?", id).First(&users).Update(&user).Error
+	err := call.database.Table("user").Where("id = ?", user.ID).First(&users).Update(&user).Error
 	if err != nil {
 		common.LogError("Update", "Error when trying to update user data, error is =>", err)
 		return nil, err
@@ -93,6 +93,17 @@ func (call *UserRepositoryImpl) Delete(id int) error {
 	err := call.database.Where("id = ?", id).Delete(&models.User{}).Error
 	if err != nil {
 		common.LogError("Delete", "Error when trying to delete user, error is =>", err)
+		return err
+	}
+	return nil
+}
+
+// UpdatePhoto use for update a picture
+func (call *UserRepositoryImpl) UpdatePhoto(user *models.User) error {
+	users := new(models.Photo)
+	err := call.database.Table("user").Where(" id = ?", user.ID).First(&users).Update(user).Error
+	if err != nil {
+		common.LogError("UpdatePhoto", "Error when trying to update photo profile, error is =>", err)
 		return err
 	}
 	return nil

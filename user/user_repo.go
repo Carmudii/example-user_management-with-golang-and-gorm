@@ -9,6 +9,7 @@ type UserRepo interface {
 	Create(user *models.User) (*models.User, error)
 	FindAll() ([]*models.UserWrapper, error)
 	FindByID(id int) (*models.UserWrapper, error)
-	Update(id int, user *models.User) (*models.User, error)
+	Update(user *models.User) (*models.User, error)
 	Delete(id int) error
+	UpdatePhoto(user *models.User) error
 }

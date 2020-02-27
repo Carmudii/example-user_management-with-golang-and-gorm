@@ -26,3 +26,9 @@ type UserWrapper struct {
 	Role    string `gorm:"column:role;default:'user'" json:"role"`
 	Photo   string `gorm:"column:photo;default:'default.jpeg'" json:"photo"`
 }
+
+// Photo use for update photo user
+type Photo struct {
+	gorm.Model
+	Photo string `gorm:"column:photo;default:'default.jpeg'" json:"photo"`
+}

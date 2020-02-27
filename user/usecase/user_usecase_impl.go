@@ -42,12 +42,33 @@ func (call *UserUsecaseImpl) Login(user *models.User) (*models.User, error) {
 
 // Create use for business logic when a new account is create
 func (call *UserUsecaseImpl) Create(user *models.User) (*models.User, error) {
+	user, err := common.Encrypt(user)
+	if err != nil {
+		return nil, err
+	}
+
+	status := call.userRepo.CheckMail(user)
+	if !status {
+		return nil, errors.New("Opps.. sorry email already use other account")
+	}
+
 	return call.userRepo.Create(user)
 }
 
 // Update use for business logic when update a account
-func (call *UserUsecaseImpl) Update(id int, user *models.User) (*models.User, error) {
-	return call.userRepo.Update(id, user)
+func (call *UserUsecaseImpl) Update(user *models.User) (*models.User, error) {
+
+	status := call.userRepo.CheckMail(user)
+	if !status {
+		return nil, errors.New("Opps.. sorry email already use other account")
+	}
+
+	user, err := common.Encrypt(user)
+	if err != nil {
+		return nil, err
+	}
+
+	return call.userRepo.Update(user)
 }
 
 // FindAll use for business logic when you want to print all user account to the List
@@ -60,6 +81,12 @@ func (call *UserUsecaseImpl) FindByID(id int) (*models.UserWrapper, error) {
 	return call.userRepo.FindByID(id)
 }
 
+// Delete use for delete use
 func (call *UserUsecaseImpl) Delete(id int) error {
 	return call.userRepo.Delete(id)
+}
+
+// UpdatePhoto use for update photo profile
+func (call *UserUsecaseImpl) UpdatePhoto(user *models.User) error {
+	return call.userRepo.UpdatePhoto(user)
 }
