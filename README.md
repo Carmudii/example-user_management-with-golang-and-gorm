@@ -28,11 +28,11 @@ this is api's documentation if you want to use my h3h3h3 script
     ```json
     {
     	"name": "carmudi",
-    	"email": "carmudi56sss@gmail.com",
+    	"email": "carmudi@n45ht.or.id",
     	"password": "123456",
-    	"no_tlpn": "08881506482",
+    	"no_tlpn": "08888888",
     	"gender": "laki-laki",
-    	"address": "jln.Kepongpong",
+    	"address": "Jln. H. Dahlan, Ragunan, Jakarta, indonesia",
     	"role":"user"
     }
     ```
