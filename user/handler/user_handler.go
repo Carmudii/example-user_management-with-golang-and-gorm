@@ -100,6 +100,13 @@ func (call *UserHandler) createUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// val, _ := auth.TokenValid(r)
+	// if val.Role != "admin" && user.Role == "admin" {
+	// 	w.WriteHeader(http.StatusForbidden)
+	// 	common.Response(w, common.Message(false, "Access denied", nil))
+	// 	return
+	// }
+
 	response, err := call.userUsecase.Create(user)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
